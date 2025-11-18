@@ -6,7 +6,7 @@ const LLM_BASE_URL = process.env.LLM_BASE_URL ?? "http://localhost:1234";
 const LLM_MODEL = process.env.LLM_MODEL ?? "local-model";
 // Increased timeout to 10 minutes (600000ms) to handle large batches that take longer to process
 const LLM_REQUEST_TIMEOUT_MS =
-  Number(process.env.LLM_REQUEST_TIMEOUT_MS ?? "600000") || 600000;
+  Number(process.env.LLM_REQUEST_TIMEOUT_MS ?? "1800000") || 1800000;
 
 /**
  * Check if LM Studio is available and responding
@@ -167,7 +167,7 @@ For each cluster:
 - label: Short name (2-5 words) for the pain point
 - pain: One clear sentence describing the problem
 - workaround: What users currently do to work around it (if mentioned)
-- solution: A SaaS product idea that could solve it
+- solution: A SaaS or product idea that could solve it
 - quotes: 2-5 direct quotes from the texts showing this pain (use the sourceId from the text)
 - tags: 2-5 relevant tags
 - scores: Estimate 0.0-1.0 for each metric
@@ -196,7 +196,7 @@ Example output format:
   ]
 }
 
-IMPORTANT: Look for ANY problems, frustrations, complaints, or pain points mentioned. Group similar ones together. Return at least 1 cluster if you find ANY issues.
+IMPORTANT: Look for any problems, frustrations, or pain points mentioned. Group similar ones together. Return at least 1 cluster if you find ANY issues.
 
 Texts to analyze:
 ${items
@@ -206,7 +206,7 @@ ${items
   )
   .join("\n\n")}
 
-Now analyze these texts and return clusters in JSON format:`.trim();
+Analyze these texts and return clusters in JSON format:`.trim();
 
   console.log(`[LLM] Processing ${items.length} items. Prompt length: ${prompt.length} chars`);
   console.log(`[LLM] First 500 chars of prompt:`, prompt.substring(0, 500));
@@ -233,5 +233,3 @@ function truncate(s: string, max: number): string {
   if (s.length <= max) return s;
   return s.slice(0, max) + "…";
 }
-
-
