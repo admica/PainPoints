@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Flow {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  userId      String? // reserved for future multi-user support
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  lastAnalyzedAt    DateTime?
+  analysisStatus    AnalysisStatus @default(idle)
+  analysisProgress  Json?
+  analysisError     String?
+  analysisDurationMs Int?
+  ingestionStatus    IngestionStatus @default(idle)
+  ingestionProgress  Json?
+  ingestionError     String?
+  ingestionDurationMs Int?
+
+  sources     FlowSource[]
+  items       SourceItem[]
+  clusters    Cluster[]
+  analysisRuns AnalysisRun[]
+}
+
+model FlowSource {
+  id        String         @id @default(cuid())
+  flowId    String
+  flow      Flow           @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  type      FlowSourceType
+  params    Json?
+  createdAt DateTime       @default(now())
+
+  items     SourceItem[]
+}
+
+enum FlowSourceType {
+  reddit
+  paste
+}
+
+enum AnalysisStatus {
+  idle
+  running
+  succeeded
+  failed
+  canceled
+}
+
+enum IngestionStatus {
+  idle
+  running
+  succeeded
+  failed
+}
+
+model SourceItem {
+  id             String       @id @default(cuid())
+  flowId         String
+  flow           Flow         @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  sourceId       String?
+  source         FlowSource?  @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  redditId       String?
+  authorHash     String?
+  title          String?
+  text           String
+  score          Int?
+  numComments    Int?
+  itemCreatedAt  DateTime?
+  url            String?
+  createdAt      DateTime     @default(now())
+
+  clusterMembers ClusterMember[]
+}
+
+model Cluster {
+  id               String          @id @default(cuid())
+  flowId           String
+  flow             Flow            @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  label            String
+  summary          String?
+  tags             Json?
+  severityScore    Float?
+  frequencyScore   Float?
+  spendIntentScore Float?
+  recencyScore     Float?
+  totalScore       Float?
+  createdAt        DateTime        @default(now())
+
+  members          ClusterMember[]
+  idea             Idea?
+}
+
+model ClusterMember {
+  id           String      @id @default(cuid())
+  clusterId    String
+  cluster      Cluster     @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+  sourceItemId String
+  sourceItem   SourceItem  @relation(fields: [sourceItemId], references: [id], onDelete: Cascade)
+  similarity   Float?
+}
+
+model Idea {
+  id         String   @id @default(cuid())
+  clusterId  String   @unique
+  cluster    Cluster  @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+  pain       String
+  workaround String?
+  solution   String
+  confidence Float?
+  createdAt  DateTime @default(now())
+}
+
+model AnalysisRun {
+  id              String          @id @default(cuid())
+  flowId          String
+  flow            Flow            @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  status          AnalysisStatus  @default(running)
+  startedAt       DateTime        @default(now())
+  completedAt     DateTime?
+  itemsAnalyzed   Int?
+  batchesProcessed Int?
+  durationMs      Int?
+  errorMessage    String?
+
+  @@index([flowId, startedAt(sort: Desc)])
+}
