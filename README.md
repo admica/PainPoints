@@ -6,7 +6,8 @@ Pain Points Analyzer is a flow-based research tool that ingests Reddit conversat
 
 <img src="assets/banner.png" alt="Cyberpunk neon grid with holographic data flows and glitch distortions" width="100%" height="auto">
 
-![Glitch Effect](https://via.placeholder.com/1200x4/00FFFF/000000?text=SCANNING...) <!-- Thin neon scanline for flair -->
+![Glitch Scanline](https://placeimg.com/1200/4/tech?text=SCANNING...) <!-- Neon cyan scanline cyberpunk theme -->
+
 ## Feature Snapshot
 
 - Flow dashboard to create, open, and delete research flows.
