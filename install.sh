@@ -53,7 +53,7 @@ print_status "Installing npm dependencies in web/"
 npm --prefix "${WEB_DIR}" install
 
 print_status "Running Prisma migrations"
-DATABASE_URL="${DATABASE_URL}" npx prisma migrate dev --schema "${SCHEMA_FILE}" --skip-generate
+DATABASE_URL="${DATABASE_URL}" npx prisma migrate dev --schema "${SCHEMA_FILE}"
 
 print_status "Checking LM Studio AppImage and CLI"
 LM_STUDIO_DIR="${LM_STUDIO_DIR:-"${HOME}/Downloads"}"
