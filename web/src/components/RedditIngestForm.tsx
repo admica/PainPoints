@@ -25,12 +25,12 @@ export function RedditIngestForm({ flowId }: { flowId: string }) {
     // Smart limits based on time range to prevent rate limiting
     // Longer time ranges = more posts available = higher risk of rate limits
     const maxLimits: Record<string, number> = {
-      hour: 100,    // Hour: can fetch more (fewer posts available)
-      day: 100,     // Day: can fetch more
-      week: 50,     // Week: moderate limit
-      month: 30,   // Month: lower limit (many posts available)
-      year: 20,    // Year: very low limit
-      all: 20,     // All time: very low limit
+      hour: 100,   // Hour: can fetch more (fewer posts available)
+      day: 100,    // Day: can fetch more
+      week: 100,   // Week: moderate limit
+      month: 100,   // Month: lower limit (many posts available)
+      year: 50,    // Year: very low limit
+      all: 25,     // All time: very low limit
     };
 
     const maxLimit = maxLimits[timeRange] || 100;

@@ -1,7 +1,12 @@
 # Pain Points Analyzer
 
 Pain Points Analyzer is a flow-based research tool that ingests Reddit conversations or pasted text, runs a local LLM (via LM Studio) to cluster recurring problems, and surfaces micro‑SaaS ideas with linked source material. This lite-verion of the app lives in `web/`, built on the Next.js App Router with Prisma + SQLite.
+# 🌐 PAIN POINTS ANALYZER
+> *Hack the collective subconscious: Flow Reddit subreddits through local LLMs to extract raw pain, workarounds, and micro-SaaS gold.*
 
+<img src="assets/banner.png" alt="Cyberpunk neon grid with holographic data flows and glitch distortions" width="100%" height="auto">
+
+![Glitch Effect](https://via.placeholder.com/1200x4/00FFFF/000000?text=SCANNING...) <!-- Thin neon scanline for flair -->
 ## Feature Snapshot
 
 - Flow dashboard to create, open, and delete research flows.
@@ -33,6 +38,7 @@ $ ./install.sh
 [SUCCESS] LM Studio AppImage found at ~/Downloads/LM-Studio-0.3.31-7-x64.appimage
 [SUCCESS] LM Studio CLI found at ~/.lmstudio/bin/lms
 [SUCCESS] Install complete. Run ./start.sh to launch services.
+
 $ ./start.sh
 Starting PainPoints services...
 [INFO] Loading environment variables from ~/PainPoints/web/.env
@@ -103,7 +109,7 @@ Services running:
 | API | Route handlers under `web/src/app/api` power flow CRUD, ingestion, analysis, and health checks. |
 | Data | SQLite database at `web/dev.db` (also `web/prisma/dev.db` for migrations) accessed via Prisma 6 generated client in `web/src/lib/prisma.ts`. |
 | LLM | LM Studio OpenAI-compatible server (`LLM_BASE_URL`, default `http://localhost:1234`) called from `web/src/lib/llm.ts`. |
-| Reddit | `web/src/lib/reddit.ts` wraps the public JSON endpoints with a 1.02 s token bucket, automatic retries, and normalization helpers. |
+| Reddit | `web/src/lib/reddit.ts` wraps the public JSON endpoints with a 1.033 s token bucket, automatic retries, and normalization helpers. |
 
 ```
 web/
