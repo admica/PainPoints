@@ -16,9 +16,44 @@ Pain Points Analyzer is a flow-based research tool that ingests Reddit conversat
 git clone https://github.com/admica/PainPoints.git ~/
 cd PainPoints
 ./install.sh
+./start.sh
 ```
 
-The server listens on `http://localhost:3000`.
+Browse to the server at `http://localhost:3000`.
+
+### Example installation and startup output
+
+```bash
+$ ./install.sh 
+[INFO] Ensuring environment file exists...
+[SUCCESS] Created .env from .env.example
+[INFO] Loading environment variables from ~/PainPoints/web/.env
+[INFO] Installing npm dependencies in web/
+[INFO] Checking LM Studio AppImage and CLI
+[SUCCESS] LM Studio AppImage found at ~/Downloads/LM-Studio-0.3.31-7-x64.appimage
+[SUCCESS] LM Studio CLI found at ~/.lmstudio/bin/lms
+[SUCCESS] Install complete. Run ./start.sh to launch services.
+$ ./start.sh
+Starting PainPoints services...
+[INFO] Loading environment variables from ~/PainPoints/web/.env
+[INFO] LM_STUDIO_APPIMAGE_NAME is not set. Searching for LM Studio AppImage in ~/Downloads...
+[SUCCESS] Found AppImage: LM-Studio-0.3.31-7-x64.appimage
+[INFO] LLM_MODEL is not set. Finding the last model in the list...
+[SUCCESS] Found last model: qwen/qwen3-vl-8b
+[SUCCESS] Model 'qwen/qwen3-vl-8b' is available. Loading...
+[INFO] Using custom context length: 25000
+Loading model "qwen/qwen3-vl-8b"...
+Model loaded successfully in 18.72s. (6.19 GB)
+[INFO] Testing LM Studio API...
+[SUCCESS] LM Studio API is responding on port 1234
+[SUCCESS] Next.js development server started successfully (PID: 56978)
+[SUCCESS] Next.js server is responding on port 3000
+[SUCCESS] All services started!
+
+Services running:
+  - LM Studio API: http://localhost:1234
+  - Next.js App:   http://localhost:3000
+```
 
 ## Prerequisites
 
