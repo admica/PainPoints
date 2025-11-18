@@ -10,6 +10,23 @@ Pain Points Analyzer is a flow-based research tool that ingests Reddit conversat
 - LM Studio–backed analysis that batches large datasets and writes clusters, ideas, and source links back to SQLite.
 - Flow details page that shows item counts, runs analysis, and lets you expand each cluster to inspect its contributing sources with outbound Reddit links.
 
+## Setup
+
+```bash
+git clone https://github.com/admica/PainPoints.git ~/
+cd PainPoints
+./install.sh
+```
+
+The server listens on `http://localhost:3000`.
+
+## Prerequisites
+
+- Node.js 20+ (tested with 22.20.0)
+- npm/npx
+- LM Studio installed locally with a chat model loaded
+- All Linux distros (there's no dnf/apt/pacman/flatpak/snap/nothin)
+
 ## Architecture
 
 | Layer | Details |
@@ -31,23 +48,6 @@ web/
 ├─ package.json
 └─ README.md (this doc)
 ```
-
-## Prerequisites
-
-- Node.js 20+ (tested with 22.20.0)
-- npm/npx
-- LM Studio installed locally with a chat model loaded
-- All Linux distros (there's no dnf/apt/pacman/flatpak/snap/nothin)
-
-## Setup
-
-```bash
-git clone https://github.com/admica/PainPoints.git ~/
-cd PainPoints
-./install.sh
-```
-
-The server listens on `http://localhost:3000`.
 
 ### Environment Variables
 
@@ -107,10 +107,8 @@ See `web/prisma/schema.prisma` or the generated models under `web/src/generated/
 
 ## Testing & Verification
 
-Manual smoke test (mirrors `TEST_PLAN.md`):
-
 1. Create a flow and open it.
-2. Add pasted snippets separated by blank lines; confirm the success toast and item count update.
+2. Add pasted snippets of text; confirm the success toast and item count update.
 3. Fetch Reddit posts (try a valid subreddit plus an invalid one to confirm error handling).
 4. Run analysis with LM Studio online; watch the button state and ensure clusters appear.
 5. Expand cluster sources to confirm Reddit metadata and external links render.
@@ -121,5 +119,6 @@ Manual smoke test (mirrors `TEST_PLAN.md`):
 - **Analysis fails immediately**: ensure LM Studio is running and `LLM_BASE_URL` is correct; `/api/flows/[id]/analyze` checks health first and returns `503` if unreachable.
 - **Reddit errors**: the API returns descriptive errors for 404, 403, and rate-limit cases; reduce post limits or wait before retrying.
 - **Database path issues**: align `DATABASE_URL` across `.env`, `npx prisma migrate dev`, and runtime; absolute paths help when running scripts outside `web/`.
+- **Environment issues**: startup automatically creates `web/.env` from `web/.env.example` so you can delete .env or edit manually to set parameters.
 
 The application state described here is for the lite-version of my application. This should give you a short & sweet insight into the full capabilities of the fully operational death star. No license.
