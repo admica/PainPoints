@@ -27,28 +27,6 @@ The server listens on `http://localhost:3000`.
 - LM Studio installed locally with a chat model loaded
 - All Linux distros (there's no dnf/apt/pacman/flatpak/snap/nothin)
 
-## Architecture
-
-| Layer | Details |
-| --- | --- |
-| UI | Next.js 16 App Router (`web/src/app`) with Tailwind CSS 4 theme overrides for the cyberpunk look. |
-| API | Route handlers under `web/src/app/api` power flow CRUD, ingestion, analysis, and health checks. |
-| Data | SQLite database at `web/dev.db` (also `web/prisma/dev.db` for migrations) accessed via Prisma 6 generated client in `web/src/lib/prisma.ts`. |
-| LLM | LM Studio OpenAI-compatible server (`LLM_BASE_URL`, default `http://localhost:1234`) called from `web/src/lib/llm.ts`. |
-| Reddit | `web/src/lib/reddit.ts` wraps the public JSON endpoints with a 1.02 s token bucket, automatic retries, and normalization helpers. |
-
-```
-web/
-├─ src/
-│  ├─ app/               # App Router pages + API routes
-│  ├─ components/        # Client components (forms, buttons)
-│  ├─ lib/               # Prisma + LLM + Reddit helpers
-│  └─ generated/prisma/  # Prisma client output
-├─ prisma/               # Schema + migrations
-├─ package.json
-└─ README.md (this doc)
-```
-
 ### Environment Variables
 
 | Key | Description | Default |
@@ -81,6 +59,28 @@ web/
 - `/api/flows/[id]/analyze` pulls every `SourceItem` for the flow, batches inputs in chunks of 100, and calls `extractClustersWithLlm`.
 - `web/src/lib/llm.ts` enforces health checks, timeouts, and JSON validation via Zod before persisting anything.
 - Each run wipes previous clusters/ideas for the flow inside a single Prisma transaction to keep results consistent.
+
+## Architecture
+
+| Layer | Details |
+| --- | --- |
+| UI | Next.js 16 App Router (`web/src/app`) with Tailwind CSS 4 theme overrides for the cyberpunk look. |
+| API | Route handlers under `web/src/app/api` power flow CRUD, ingestion, analysis, and health checks. |
+| Data | SQLite database at `web/dev.db` (also `web/prisma/dev.db` for migrations) accessed via Prisma 6 generated client in `web/src/lib/prisma.ts`. |
+| LLM | LM Studio OpenAI-compatible server (`LLM_BASE_URL`, default `http://localhost:1234`) called from `web/src/lib/llm.ts`. |
+| Reddit | `web/src/lib/reddit.ts` wraps the public JSON endpoints with a 1.02 s token bucket, automatic retries, and normalization helpers. |
+
+```
+web/
+├─ src/
+│  ├─ app/               # App Router pages + API routes
+│  ├─ components/        # Client components (forms, buttons)
+│  ├─ lib/               # Prisma + LLM + Reddit helpers
+│  └─ generated/prisma/  # Prisma client output
+├─ prisma/               # Schema + migrations
+├─ package.json
+└─ README.md (this doc)
+```
 
 ## API Reference
 
