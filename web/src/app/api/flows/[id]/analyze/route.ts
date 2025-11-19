@@ -330,25 +330,36 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     addLog(`Saving ${result.clusters.length} clusters to database...`);
     await updateProgress(baseProgress);
 
-    const createdClusters = await prisma.$transaction(async (tx) => {
-      // In "full" mode, delete everything first.
-      // In "refine" mode, we KEEP existing clusters and merge into them.
-      if (mode === "full") {
-        await tx.clusterMember.deleteMany({ where: { cluster: { flowId: flow.id } } });
-        await tx.idea.deleteMany({ where: { cluster: { flowId: flow.id } } });
-        await tx.cluster.deleteMany({ where: { flowId: flow.id } });
-      }
+    // 1. Cleanup (Full Mode)
+    if (mode === "full") {
+      addLog("Clearing old data (Full Mode)...");
+      await updateProgress(baseProgress);
+      await prisma.$transaction([
+        prisma.clusterMember.deleteMany({ where: { cluster: { flowId: flow.id } } }),
+        prisma.idea.deleteMany({ where: { cluster: { flowId: flow.id } } }),
+        prisma.cluster.deleteMany({ where: { flowId: flow.id } }),
+      ]);
+    }
 
-      // For "refine" mode, we need to fetch existing clusters to merge with
-      const existingDbClusters = mode === "refine" 
-        ? await tx.cluster.findMany({ where: { flowId: flow.id }, include: { idea: true } })
-        : [];
+    // 2. Prepare Context (Refine Mode)
+    const existingDbClusters = mode === "refine" 
+      ? await prisma.cluster.findMany({ where: { flowId: flow.id }, include: { idea: true } })
+      : [];
 
-      const newClusters = [];
+    const createdClusters = [];
+    const clustersToSave = result.clusters ?? [];
 
-      for (const c of result.clusters ?? []) {
+    // 3. Save Clusters (One by one to allow progress updates and avoid long transactions)
+    for (let i = 0; i < clustersToSave.length; i++) {
+      const c = clustersToSave[i];
+      
+      // Update log every few items
+      addLog(`Saving cluster ${i + 1}/${clustersToSave.length}: "${c.label.slice(0, 30)}${c.label.length > 30 ? '...' : ''}"`);
+      await updateProgress(baseProgress);
+
+      const targetClusterId = await prisma.$transaction(async (tx) => {
         // Try to find a matching existing cluster (fuzzy match on label)
-        let targetClusterId: string | null = null;
+        let targetId: string | null = null;
 
         if (mode === "refine") {
           const match = existingDbClusters.find(
@@ -356,7 +367,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
                        c.label.toLowerCase().includes(existing.label.toLowerCase())
           );
           if (match) {
-            targetClusterId = match.id;
+            targetId = match.id;
             // Update existing cluster scores/tags if needed
             await tx.cluster.update({
               where: { id: match.id },
@@ -373,7 +384,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
         }
 
         // Create new cluster if no match found or in full mode
-        if (!targetClusterId) {
+        if (!targetId) {
           const cluster = await tx.cluster.create({
             data: {
               flowId: flow.id,
@@ -387,7 +398,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
               totalScore: c.scores?.total ?? null,
             },
           });
-          targetClusterId = cluster.id;
+          targetId = cluster.id;
 
           const solution = c.solution || "";
           const workaround = c.workaround || null;
@@ -410,28 +421,37 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             if (mode === "refine") {
               const exists = await tx.clusterMember.findFirst({
                 where: {
-                  clusterId: targetClusterId,
+                  clusterId: targetId,
                   sourceItemId: q.sourceId
                 }
               });
               if (exists) continue;
             }
 
-            await tx.clusterMember.create({
-              data: { 
-                clusterId: targetClusterId, 
-                sourceItemId: q.sourceId, 
-                similarity: null 
-              }
+            // Check if source item exists to prevent foreign key errors
+            const sourceItem = await tx.sourceItem.findUnique({
+              where: { id: q.sourceId }
             });
+            
+            if (sourceItem) {
+              await tx.clusterMember.create({
+                data: { 
+                  clusterId: targetId, 
+                  sourceItemId: q.sourceId, 
+                  similarity: null 
+                }
+              });
+            }
           }
         }
 
-        newClusters.push(targetClusterId);
-      }
+        return targetId;
+      });
 
-      return newClusters;
-    });
+      if (targetClusterId) {
+        createdClusters.push(targetClusterId);
+      }
+    }
 
     await finalizeRun({
       status: "succeeded",

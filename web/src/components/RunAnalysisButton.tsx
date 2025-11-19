@@ -82,14 +82,10 @@ export function RunAnalysisButton({ id }: { id: string }) {
             color: 'var(--bg-primary)',
             borderRight: '1px solid rgba(0,0,0,0.2)'
           }}
-          onMouseEnter={(e) => {
+          onMouseEnter={() => {
             if (!isAnalyzing) {
               audioManager.playHover();
-              e.currentTarget.style.boxShadow = '0 0 4px var(--glow-green), 0 0 8px var(--glow-green)';
             }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = 'none';
           }}
         >
           {isAnalyzing && (
@@ -106,14 +102,10 @@ export function RunAnalysisButton({ id }: { id: string }) {
           }}
           className="rounded-r-md px-2 py-2 text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ backgroundColor: 'var(--neon-green)', color: 'var(--bg-primary)' }}
-          onMouseEnter={(e) => {
+          onMouseEnter={() => {
             if (!isAnalyzing) {
               audioManager.playHover();
-              e.currentTarget.style.boxShadow = '0 0 4px var(--glow-green), 0 0 8px var(--glow-green)';
             }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = 'none';
           }}
         >
           ▼

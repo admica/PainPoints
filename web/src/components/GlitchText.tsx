@@ -7,21 +7,16 @@ interface GlitchTextProps {
   className?: string;
 }
 
+/* 
+  Updated to remove glitch effect and heavy text shadows.
+  Now renders clean text in the accent color.
+*/
 export function GlitchText({ children, className = "" }: GlitchTextProps) {
-  const text = typeof children === "string" ? children : String(children);
-
   return (
     <span
-      className={`glitch-text ${className}`}
-      data-text={text}
-      style={{
-        position: "relative",
-        color: "#00a8b5",
-        textShadow: "0 0 5px #00a8b5, 0 0 10px #00a8b5, 0 0 15px #00a8b5, 0 0 20px #00a8b5",
-      }}
+      className={`text-neon-cyan font-semibold ${className}`}
     >
       {children}
     </span>
   );
 }
-
