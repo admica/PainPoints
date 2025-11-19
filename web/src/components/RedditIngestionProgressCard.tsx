@@ -125,22 +125,23 @@ export function RedditIngestionProgressCard({ flowId, initial }: Props) {
     }
   };
 
-  // Don't render if idle and no progress, UNLESS we are starting
-  if (!isStarting && statusInfo.status === "idle" && !statusInfo.progress) {
-    return null;
-  }
+  // Always render the card to ensure visibility, but style it as "inactive" if idle
+  const isInactive = !isStarting && statusInfo.status === "idle";
 
   // Use "STARTING" status if we are starting but backend still says idle
   const displayStatus = isStarting && statusInfo.status === "idle" ? "running" : statusInfo.status;
 
   return (
-    <div className="mb-6 rounded-md border p-4" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-elevated)' }}>
+    <div 
+      className={`mb-6 rounded-md border p-4 transition-opacity duration-500 ${isInactive ? "opacity-60" : "opacity-100"}`}
+      style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-elevated)' }}
+    >
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2">
           <span
             className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[displayStatus] || statusStyles.running}`}
           >
-            {isStarting && statusInfo.status === "idle" ? "STARTING" : statusInfo.status.toUpperCase()}
+            {isStarting && statusInfo.status === "idle" ? "STARTING..." : statusInfo.status.toUpperCase()}
           </span>
           <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
             Reddit Ingestion
@@ -148,34 +149,45 @@ export function RedditIngestionProgressCard({ flowId, initial }: Props) {
         </div>
       </div>
 
-      {statusInfo.progress && (
-        <div className="mt-3">
-          <div className="mb-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
-            {getStepDescription(statusInfo.progress.step)}
+      {/* Only show progress details if not idle (or if starting) */}
+      {!isInactive && (
+        <>
+          {statusInfo.progress && (
+            <div className="mt-3">
+              <div className="mb-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                {getStepDescription(statusInfo.progress.step)}
+              </div>
+              <div className="mb-2 h-2 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                <div
+                  className="h-2 rounded-full transition-all"
+                  style={{ width: `${progressPercent}%`, backgroundColor: 'var(--neon-cyan)' }}
+                />
+              </div>
+              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {statusInfo.progress.postsProcessed}/{statusInfo.progress.totalPosts} posts • {statusInfo.progress.commentsProcessed} comments
+              </div>
+            </div>
+          )}
+
+          <div className="mt-3 grid gap-3 text-sm md:grid-cols-2">
+            <div>
+              <div style={{ color: 'var(--text-secondary)' }}>Duration</div>
+              <div style={{ color: 'var(--text-primary)' }}>{formatDuration(statusInfo.durationMs)}</div>
+            </div>
+            {statusInfo.error && (
+              <div className="md:col-span-2 text-sm" style={{ color: 'var(--neon-pink)' }}>
+                Error: {statusInfo.error}
+              </div>
+            )}
           </div>
-          <div className="mb-2 h-2 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-            <div
-              className="h-2 rounded-full transition-all"
-              style={{ width: `${progressPercent}%`, backgroundColor: 'var(--neon-cyan)' }}
-            />
-          </div>
-          <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            {statusInfo.progress.postsProcessed}/{statusInfo.progress.totalPosts} posts • {statusInfo.progress.commentsProcessed} comments
-          </div>
+        </>
+      )}
+      
+      {isInactive && (
+        <div className="mt-2 text-xs italic" style={{ color: 'var(--text-muted)' }}>
+          Ready to ingest data.
         </div>
       )}
-
-      <div className="mt-3 grid gap-3 text-sm md:grid-cols-2">
-        <div>
-          <div style={{ color: 'var(--text-secondary)' }}>Duration</div>
-          <div style={{ color: 'var(--text-primary)' }}>{formatDuration(statusInfo.durationMs)}</div>
-        </div>
-        {statusInfo.error && (
-          <div className="md:col-span-2 text-sm" style={{ color: 'var(--neon-pink)' }}>
-            Error: {statusInfo.error}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
