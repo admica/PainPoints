@@ -209,14 +209,14 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
       const batch = batches[batchIndex];
       console.log(`Processing batch ${batchIndex + 1}/${batches.length} (${batch.length} items)`);
-      
+
       addLog(`Processing batch ${batchIndex + 1}/${batches.length} (${batch.length} items)...`);
       baseProgress.batch = batchIndex + 1;
       await updateProgress(baseProgress);
 
       try {
         const batchResult = await extractClustersWithLlm(batch, existingContext);
-        
+
         addLog(`Batch ${batchIndex + 1} complete. Found ${batchResult.clusters.length} clusters.`);
         await updateProgress(baseProgress);
 
@@ -250,7 +250,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
         const errorMessage =
           batchError instanceof Error ? batchError.message : "Unknown LLM error";
         console.error(`Error processing batch ${batchIndex + 1}:`, batchError);
-        
+
         addLog(`Error in batch ${batchIndex + 1}: ${errorMessage}`);
         await updateProgress(baseProgress);
 
@@ -292,7 +292,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     if (allClusters.length === 0) {
       addLog("Analysis finished but no clusters were found.");
       await updateProgress(baseProgress);
-      
+
       await finalizeRun({
         status: "failed",
         errorMessage: "Analysis completed but no clusters were generated",
@@ -327,12 +327,13 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
       );
     }
 
+    addLog(`Saving ${result.clusters.length} clusters to database...`);
+    await updateProgress(baseProgress);
+
     const createdClusters = await prisma.$transaction(async (tx) => {
       // In "full" mode, delete everything first.
       // In "refine" mode, we KEEP existing clusters and merge into them.
       if (mode === "full") {
-        addLog("Clearing old data (Full Mode)...");
-        await updateProgress(baseProgress);
         await tx.clusterMember.deleteMany({ where: { cluster: { flowId: flow.id } } });
         await tx.idea.deleteMany({ where: { cluster: { flowId: flow.id } } });
         await tx.cluster.deleteMany({ where: { flowId: flow.id } });
@@ -344,14 +345,11 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
         : [];
 
       const newClusters = [];
-      
-      addLog(`Saving ${result.clusters.length} clusters to database...`);
-      await updateProgress(baseProgress);
-      
+
       for (const c of result.clusters ?? []) {
         // Try to find a matching existing cluster (fuzzy match on label)
         let targetClusterId: string | null = null;
-        
+
         if (mode === "refine") {
           const match = existingDbClusters.find(
             existing => existing.label.toLowerCase().includes(c.label.toLowerCase()) || 
@@ -390,7 +388,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             },
           });
           targetClusterId = cluster.id;
-          
+
           const solution = c.solution || "";
           const workaround = c.workaround || null;
           await tx.idea.create({
@@ -418,7 +416,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
               });
               if (exists) continue;
             }
-            
+
             await tx.clusterMember.create({
               data: { 
                 clusterId: targetClusterId, 
@@ -428,7 +426,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             });
           }
         }
-        
+
         newClusters.push(targetClusterId);
       }
 

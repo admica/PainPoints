@@ -141,16 +141,16 @@ if [ -n "$MODEL_TO_LOAD" ]; then
   if [ -f "$LMS_CLI_PATH" ]; then
     if "$LMS_CLI_PATH" ls | grep -q "$MODEL_TO_LOAD"; then
       print_success "Model '$MODEL_TO_LOAD' is available. Loading..."
-      
+
       # Build the load command with optional context length
       LOAD_OPTS=("--gpu" "max")
       if [ -n "$MODEL_CONTEXT_LENGTH" ]; then
         print_status "Using custom context length: $MODEL_CONTEXT_LENGTH"
         LOAD_OPTS+=("--context-length" "$MODEL_CONTEXT_LENGTH")
       fi
-      
+
       "$LMS_CLI_PATH" load "$MODEL_TO_LOAD" "${LOAD_OPTS[@]}"
-      
+
       if [ $? -eq 0 ]; then
         print_success "Model '$MODEL_TO_LOAD' loaded successfully."
       else

@@ -9,7 +9,7 @@ interface GlitchTextProps {
 
 export function GlitchText({ children, className = "" }: GlitchTextProps) {
   const text = typeof children === "string" ? children : String(children);
-  
+
   return (
     <span
       className={`glitch-text ${className}`}

@@ -25,7 +25,7 @@ export function RunAnalysisButton({ id }: { id: string }) {
     setIsAnalyzing(true);
     setMessage(null);
     setShowMenu(false);
-    
+
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("analysis-started", { detail: { flowId: id } }));
     }
@@ -97,7 +97,7 @@ export function RunAnalysisButton({ id }: { id: string }) {
           )}
           {isAnalyzing ? 'Analyzing...' : (mode === "refine" ? "Refine & Add" : "Fresh Analysis")}
         </button>
-        
+
         <button
           disabled={isAnalyzing}
           onClick={() => {

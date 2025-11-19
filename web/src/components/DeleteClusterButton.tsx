@@ -14,7 +14,7 @@ export function DeleteClusterButton({ flowId, clusterId }: Props) {
   const onClick = async () => {
     audioManager.playClick();
     if (!confirm("Delete this cluster? The source items will remain available for re-analysis.")) return;
-    
+
     setIsDeleting(true);
     try {
       const res = await fetch(`/api/flows/${flowId}/clusters/${clusterId}`, { method: "DELETE" });

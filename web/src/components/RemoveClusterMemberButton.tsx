@@ -15,15 +15,15 @@ export function RemoveClusterMemberButton({ flowId, clusterId, memberId }: Props
   const onClick = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent details/summary toggle if clicked
     audioManager.playClick();
-    
+
     if (!confirm("Remove this item from the cluster?")) return;
-    
+
     setIsDeleting(true);
     try {
       const res = await fetch(`/api/flows/${flowId}/clusters/${clusterId}/members/${memberId}`, { 
         method: "DELETE" 
       });
-      
+
       if (res.ok) {
         audioManager.playTaskComplete();
         window.location.reload();

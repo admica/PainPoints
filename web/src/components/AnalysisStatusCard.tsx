@@ -43,6 +43,7 @@ export function AnalysisStatusCard({ flowId, initial }: Props) {
   const [isCancelling, setIsCancelling] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   const fetchStatus = useCallback(async () => {
@@ -63,13 +64,22 @@ export function AnalysisStatusCard({ flowId, initial }: Props) {
         history: data.history ?? [],
       });
       setFetchError(null);
+
+      // If we were starting and now we see running, we can stop the "starting" override
+      // but we keep polling because isRunning will be true.
+      // If we see succeeded/failed, we stop starting.
+      if (data.status === "running") {
+        setIsStarting(false);
+      } else if (data.status !== "idle" && data.status !== "running") {
+        setIsStarting(false);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to refresh analysis status.";
       setFetchError(message);
     }
   }, [flowId, statusInfo.itemsCount]);
 
-  const isRunning = statusInfo.status === "running";
+  const isRunning = statusInfo.status === "running" || isStarting;
 
   // Auto-expand when running
   useEffect(() => {
@@ -97,6 +107,7 @@ export function AnalysisStatusCard({ flowId, initial }: Props) {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ flowId?: string }>).detail;
       if (detail?.flowId === flowId) {
+        setIsStarting(true);
         fetchStatus();
       }
     };
@@ -177,7 +188,7 @@ export function AnalysisStatusCard({ flowId, initial }: Props) {
             </span>
           )}
         </div>
-        
+
         <div className="flex items-center gap-4">
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
             Items: <span style={{ color: 'var(--neon-green)' }}>{statusInfo.itemsCount}</span>
@@ -195,7 +206,7 @@ export function AnalysisStatusCard({ flowId, initial }: Props) {
       {/* Expanded Content */}
       {isExpanded && (
         <div className="px-4 pb-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
-          
+
           {/* Progress Bar & Activity */}
           {statusInfo.progress && (
             <div className="mt-4">

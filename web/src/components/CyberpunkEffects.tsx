@@ -30,7 +30,7 @@ export function CyberpunkEffects() {
 
     function draw() {
       if (!ctx || !canvas) return;
-      
+
       ctx.fillStyle = "rgba(0, 0, 0, 0.04)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -70,7 +70,7 @@ export function CyberpunkEffects() {
   return (
     <>
       <Cursor />
-      
+
       {/* Matrix Rain Background */}
       <canvas
         ref={canvasRef}

@@ -45,7 +45,7 @@ export function EditClusterButton({ flowId, clusterId, initialLabel, initialSumm
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
         <div className="w-full max-w-lg glass-panel p-6 rounded-lg border border-neon-cyan shadow-[0_0_20px_rgba(0,168,181,0.3)]">
           <h3 className="text-lg font-bold text-neon-cyan mb-4">Edit Cluster</h3>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm text-text-secondary mb-1">Label</label>
@@ -56,7 +56,7 @@ export function EditClusterButton({ flowId, clusterId, initialLabel, initialSumm
                 disabled={isSaving}
               />
             </div>
-            
+
             <div>
               <label className="block text-sm text-text-secondary mb-1">Summary / Pain</label>
               <textarea

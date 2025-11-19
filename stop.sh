@@ -87,7 +87,7 @@ fi
 # Alternative: Try to find and kill processes by name/port if PID files don't exist
 if ! [ -f "$LM_STUDIO_PID_FILE" ] && ! [ -f "$NEXTJS_PID_FILE" ]; then
   print_status "Attempting to find processes by port..."
-  
+
   # Find process on port 1234 (LM Studio)
   LM_PORT_PID=$(lsof -ti:1234 2>/dev/null)
   if [ -n "$LM_PORT_PID" ]; then
@@ -95,7 +95,7 @@ if ! [ -f "$LM_STUDIO_PID_FILE" ] && ! [ -f "$NEXTJS_PID_FILE" ]; then
     kill "$LM_PORT_PID" 2>/dev/null
     print_success "Stopped process on port 1234"
   fi
-  
+
   # Find process on port 3000 (Next.js)
   NEXTJS_PORT_PID=$(lsof -ti:3000 2>/dev/null)
   if [ -n "$NEXTJS_PORT_PID" ]; then

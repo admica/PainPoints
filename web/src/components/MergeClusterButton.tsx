@@ -48,7 +48,7 @@ export function MergeClusterButton({ flowId, sourceClusterId, sourceLabel }: Pro
 
   const onMerge = async () => {
     if (!targetClusterId) return;
-    
+
     audioManager.playClick();
     if (!confirm(`Merge "${sourceLabel}" into the selected cluster? This cannot be undone.`)) return;
 
@@ -86,7 +86,7 @@ export function MergeClusterButton({ flowId, sourceClusterId, sourceLabel }: Pro
           <p className="text-sm text-text-secondary mb-4">
             Merge <span className="text-white font-semibold">"{sourceLabel}"</span> into:
           </p>
-          
+
           <div className="space-y-4">
             {isLoadingClusters ? (
               <div className="text-center py-4 text-neon-cyan animate-pulse">Loading clusters...</div>

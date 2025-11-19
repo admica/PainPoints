@@ -15,13 +15,13 @@ export function DeleteSourceItemButton({
   const onClick = async () => {
     audioManager.playClick();
     if (!confirm("Delete this item permanently?")) return;
-    
+
     setIsDeleting(true);
     try {
       const res = await fetch(`/api/flows/${flowId}/items/${itemId}`, { 
         method: "DELETE" 
       });
-      
+
       if (res.ok) {
         audioManager.playTaskComplete();
         window.location.reload();

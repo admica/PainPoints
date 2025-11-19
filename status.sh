@@ -48,11 +48,11 @@ if [ -f "$LM_STUDIO_PID_FILE" ]; then
   LM_STUDIO_PID=$(cat "$LM_STUDIO_PID_FILE")
   if kill -0 "$LM_STUDIO_PID" >/dev/null 2>&1; then
     print_success "  - Process is RUNNING (PID: $LM_STUDIO_PID)"
-    
+
     # Check API and loaded model
     if curl -s "http://localhost:${LM_STUDIO_PORT}/v1/models" >/dev/null 2>&1; then
       print_success "  - API is RESPONDING on http://localhost:${LM_STUDIO_PORT}"
-      
+
       # Check for loaded model
       if command -v jq >/dev/null 2>&1; then
         MODEL_ID=$(curl -s "http://localhost:${LM_STUDIO_PORT}/v1/models" | jq -r '.data[0].id')
@@ -87,7 +87,7 @@ if [ -f "$NEXTJS_PID_FILE" ]; then
   NEXTJS_PID=$(cat "$NEXTJS_PID_FILE")
   if kill -0 "$NEXTJS_PID" >/dev/null 2>&1; then
     print_success "  - Process is RUNNING (PID: $NEXTJS_PID)"
-    
+
     # Check server
     if curl -s "http://localhost:${NEXTJS_PORT}" >/dev/null 2>&1; then
       print_success "  - Server is RESPONDING on http://localhost:${NEXTJS_PORT}"
