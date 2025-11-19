@@ -182,7 +182,7 @@ export function RedditIngestionProgressCard({ flowId, initial }: Props) {
           </div>
         </>
       )}
-      
+
       {isInactive && (
         <div className="mt-2 text-xs italic" style={{ color: 'var(--text-muted)' }}>
           Ready to ingest data.
