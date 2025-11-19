@@ -10,6 +10,7 @@ import { AudioLink } from "@/components/AudioLink";
 import { DeleteClusterButton } from "@/components/DeleteClusterButton";
 import { EditClusterButton } from "@/components/EditClusterButton";
 import { RemoveClusterMemberButton } from "@/components/RemoveClusterMemberButton";
+import { MergeClusterButton } from "@/components/MergeClusterButton";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -139,6 +140,11 @@ export default async function FlowPage({ params }: Params) {
               {flow.clusters.map((c) => (
                 <div key={c.id} className="rounded-md border p-4 transition-colors hover:border-cyan-500 relative group" style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-color)' }}>
                   <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                    <MergeClusterButton 
+                      flowId={flow.id} 
+                      sourceClusterId={c.id} 
+                      sourceLabel={c.label}
+                    />
                     <EditClusterButton 
                       flowId={flow.id} 
                       clusterId={c.id} 
@@ -150,7 +156,7 @@ export default async function FlowPage({ params }: Params) {
                   <div className="mb-1 text-sm" style={{ color: 'var(--text-muted)' }}>
                     Score: <span className="font-semibold" style={{ color: 'var(--neon-green)' }}>{c.totalScore ?? "—"}</span>
                   </div>
-                  <h3 className="text-lg font-semibold mb-2 mr-12" style={{ color: 'var(--neon-cyan)' }}>{c.label}</h3>
+                  <h3 className="text-lg font-semibold mb-2 mr-24" style={{ color: 'var(--neon-cyan)' }}>{c.label}</h3>
                   {c.summary ? <p className="mb-3" style={{ color: 'var(--text-primary)' }}>{c.summary}</p> : null}
                   {c.idea ? (
                     <div className="mt-2 rounded-md p-3 text-sm border" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>

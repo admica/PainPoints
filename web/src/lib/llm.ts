@@ -144,7 +144,7 @@ export { ExtractClustersOutputSchema };
 
 export async function extractClustersWithLlm(
   items: ExtractClustersInput,
-  existingContext?: string[] // Optional: Array of existing cluster labels/summaries
+  existingContext?: string[] // Optional: Array of existing cluster labels
 ): Promise<ExtractClustersOutput> {
   const system: ChatMessage = {
     role: "system",
@@ -164,8 +164,8 @@ Return ONLY valid JSON. No explanations.`,
   if (existingContext && existingContext.length > 0) {
     contextPrompt = `\n\nCONTEXT - EXISTING PAIN POINTS:
 The following pain points have already been identified. 
-If the new items match these existing patterns, group them into a cluster with the SAME LABEL.
-If they represent NEW problems, create NEW clusters.
+If the new items match these existing patterns, group them into a cluster with the EXACT SAME LABEL as the existing one.
+If they represent NEW problems, create NEW clusters with new labels.
 
 Existing Labels:
 ${existingContext.map(label => `- ${label}`).join("\n")}
@@ -177,7 +177,7 @@ ${existingContext.map(label => `- ${label}`).join("\n")}
 CRITICAL: You MUST return at least 1 cluster. If you find ANY problems, complaints, or frustrations in the texts, create clusters for them. Do NOT return an empty clusters array.${contextPrompt}
 
 For each cluster:
-- label: Short name (2-5 words) for the pain point. USE EXISTING LABELS if appropriate.
+- label: Short name (2-5 words) for the pain point. USE AN EXISTING LABEL if the pain point matches one of the contexts.
 - pain: One clear sentence describing the problem
 - workaround: What users currently do to work around it (if mentioned)
 - solution: A SaaS or product idea that could solve it
