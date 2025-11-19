@@ -25,6 +25,7 @@ type Props = {
 
 export function RedditIngestionProgressCard({ flowId, initial }: Props) {
   const [statusInfo, setStatusInfo] = useState(initial);
+  const [isStarting, setIsStarting] = useState(false);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -39,18 +40,24 @@ export function RedditIngestionProgressCard({ flowId, initial }: Props) {
         error: data.ingestionError ?? null,
         durationMs: data.ingestionDurationMs ?? null,
       });
+
+      if (data.ingestionStatus === "running") {
+        setIsStarting(false);
+      } else if (data.ingestionStatus !== "idle") {
+        setIsStarting(false);
+      }
     } catch (error) {
       console.error("Failed to fetch ingestion status:", error);
     }
   }, [flowId]);
 
-  const isRunning = statusInfo.status === "running";
+  const isRunning = statusInfo.status === "running" || isStarting;
 
   useEffect(() => {
     if (!isRunning) return;
     const interval = setInterval(() => {
       fetchStatus();
-    }, 2000);
+    }, 1000); // Poll faster (1s) for better feedback
     return () => clearInterval(interval);
   }, [isRunning, fetchStatus]);
 
@@ -58,6 +65,7 @@ export function RedditIngestionProgressCard({ flowId, initial }: Props) {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ flowId?: string }>).detail;
       if (detail?.flowId === flowId) {
+        setIsStarting(true);
         fetchStatus();
       }
     };
@@ -117,19 +125,22 @@ export function RedditIngestionProgressCard({ flowId, initial }: Props) {
     }
   };
 
-  // Don't render if idle and no progress
-  if (statusInfo.status === "idle" && !statusInfo.progress) {
+  // Don't render if idle and no progress, UNLESS we are starting
+  if (!isStarting && statusInfo.status === "idle" && !statusInfo.progress) {
     return null;
   }
+
+  // Use "STARTING" status if we are starting but backend still says idle
+  const displayStatus = isStarting && statusInfo.status === "idle" ? "running" : statusInfo.status;
 
   return (
     <div className="mb-6 rounded-md border p-4" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-elevated)' }}>
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2">
           <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[statusInfo.status]}`}
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[displayStatus] || statusStyles.running}`}
           >
-            {statusInfo.status.toUpperCase()}
+            {isStarting && statusInfo.status === "idle" ? "STARTING" : statusInfo.status.toUpperCase()}
           </span>
           <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
             Reddit Ingestion

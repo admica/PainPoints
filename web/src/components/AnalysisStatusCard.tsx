@@ -44,7 +44,7 @@ export function AnalysisStatusCard({ flowId, initial }: Props) {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
-  const logsEndRef = useRef<HTMLDivElement>(null);
+  const logsContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -88,10 +88,10 @@ export function AnalysisStatusCard({ flowId, initial }: Props) {
     }
   }, [isRunning]);
 
-  // Auto-scroll logs
+  // Auto-scroll logs container
   useEffect(() => {
-    if (logsEndRef.current) {
-      logsEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (logsContainerRef.current) {
+      logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
     }
   }, [statusInfo.progress?.logs]);
 
@@ -227,7 +227,10 @@ export function AnalysisStatusCard({ flowId, initial }: Props) {
 
               {/* Live Terminal Logs */}
               {statusInfo.progress.logs && statusInfo.progress.logs.length > 0 && (
-                <div className="mb-4 rounded bg-black/50 p-3 font-mono text-xs border border-white/10 h-48 overflow-y-auto shadow-inner">
+                <div 
+                  ref={logsContainerRef}
+                  className="mb-4 rounded bg-black/50 p-3 font-mono text-xs border border-white/10 h-48 overflow-y-auto shadow-inner custom-scrollbar"
+                >
                   {statusInfo.progress.logs.map((log, i) => (
                     <div key={i} className="mb-1 last:mb-0 text-gray-300">
                       <span className="text-gray-500 mr-2">{log.split(']')[0]}]</span>
@@ -236,7 +239,6 @@ export function AnalysisStatusCard({ flowId, initial }: Props) {
                       </span>
                     </div>
                   ))}
-                  <div ref={logsEndRef} />
                 </div>
               )}
             </div>
