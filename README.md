@@ -16,7 +16,9 @@ Pain Points Analyzer is a flow-based research tool that ingests Reddit conversat
 
 ## Setup
 
-Linux only. Works great with AMD and Nvidia GPUs.
+Linux only. Works great with AMD and Nvidia GPUs. Most of my testing was done usnig model `qwen/qwen3-vl-8b` but almost any model should work fine.
+
+Download LM Studio and at least one model before you begin. The startup script here will auto-detect the model and update your .env
 
 ```bash
 git clone https://github.com/admica/PainPoints.git ~/
