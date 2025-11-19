@@ -12,13 +12,16 @@ import {
   markAnalysisRunning,
 } from "@/lib/analysisControl";
 
-export async function POST(_: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   try {
     const flow = await prisma.flow.findUnique({ where: { id } });
     if (!flow) {
       return NextResponse.json({ error: "flow not found" }, { status: 404 });
     }
+
+    const body = await req.json().catch(() => ({}));
+    const mode = (body?.mode ?? "full") as "full" | "refine";
 
      if (flow.analysisStatus === "running") {
       return NextResponse.json(
@@ -54,6 +57,18 @@ export async function POST(_: NextRequest, context: { params: Promise<{ id: stri
       text: it.text,
       title: it.title,
     }));
+
+    // If refining, get existing clusters for context
+    let existingContext: string[] = [];
+    if (mode === "refine") {
+      const clusters = await prisma.cluster.findMany({
+        where: { flowId: flow.id },
+        select: { label: true, summary: true },
+      });
+      existingContext = clusters.map(
+        (c) => `${c.label}${c.summary ? `: ${c.summary}` : ""}`
+      );
+    }
 
     // Batch items if dataset is large (to avoid context limits and improve processing)
     // Reduced batch size to help model process better - ~50 items per batch
@@ -178,7 +193,7 @@ export async function POST(_: NextRequest, context: { params: Promise<{ id: stri
       console.log(`Processing batch ${batchIndex + 1}/${batches.length} (${batch.length} items)`);
 
       try {
-        const batchResult = await extractClustersWithLlm(batch);
+        const batchResult = await extractClustersWithLlm(batch, existingContext);
 
         // Merge clusters intelligently - avoid exact duplicates
         for (const newCluster of batchResult.clusters) {
@@ -277,52 +292,109 @@ export async function POST(_: NextRequest, context: { params: Promise<{ id: stri
         {
           error: "invalid_response",
           message: "LLM returned invalid response format",
-        },
+          },
         { status: 500 },
       );
     }
 
     const createdClusters = await prisma.$transaction(async (tx) => {
-      await tx.clusterMember.deleteMany({ where: { cluster: { flowId: flow.id } } });
-      await tx.idea.deleteMany({ where: { cluster: { flowId: flow.id } } });
-      await tx.cluster.deleteMany({ where: { flowId: flow.id } });
+      // In "full" mode, delete everything first.
+      // In "refine" mode, we KEEP existing clusters and merge into them.
+      if (mode === "full") {
+        await tx.clusterMember.deleteMany({ where: { cluster: { flowId: flow.id } } });
+        await tx.idea.deleteMany({ where: { cluster: { flowId: flow.id } } });
+        await tx.cluster.deleteMany({ where: { flowId: flow.id } });
+      }
+
+      // For "refine" mode, we need to fetch existing clusters to merge with
+      const existingDbClusters = mode === "refine" 
+        ? await tx.cluster.findMany({ where: { flowId: flow.id }, include: { idea: true } })
+        : [];
 
       const newClusters = [];
+      
       for (const c of result.clusters ?? []) {
-        const cluster = await tx.cluster.create({
-          data: {
-            flowId: flow.id,
-            label: c.label?.slice(0, 180) || "Untitled",
-            summary: c.pain?.slice(0, 2000) ?? null,
-            tags: c.tags ?? [],
-            severityScore: c.scores?.severity ?? null,
-            frequencyScore: c.scores?.frequency ?? null,
-            spendIntentScore: c.scores?.spendIntent ?? null,
-            recencyScore: c.scores?.recency ?? null,
-            totalScore: c.scores?.total ?? null,
-          },
-        });
+        // Try to find a matching existing cluster (fuzzy match on label)
+        let targetClusterId: string | null = null;
+        
+        if (mode === "refine") {
+          const match = existingDbClusters.find(
+            existing => existing.label.toLowerCase().includes(c.label.toLowerCase()) || 
+                       c.label.toLowerCase().includes(existing.label.toLowerCase())
+          );
+          if (match) {
+            targetClusterId = match.id;
+            // Update existing cluster scores/tags if needed
+            await tx.cluster.update({
+              where: { id: match.id },
+              data: {
+                severityScore: c.scores?.severity ?? match.severityScore,
+                frequencyScore: c.scores?.frequency ?? match.frequencyScore,
+                spendIntentScore: c.scores?.spendIntent ?? match.spendIntentScore,
+                recencyScore: c.scores?.recency ?? match.recencyScore,
+                totalScore: c.scores?.total ?? match.totalScore,
+                // Ideally merge tags, but replacing is safer for now to avoid dupes
+              }
+            });
+          }
+        }
 
-        if (c.quotes?.length) {
-          await tx.clusterMember.createMany({
-            data: c.quotes
-              .slice(0, 20)
-              .map((q) => ({ clusterId: cluster.id, sourceItemId: q.sourceId, similarity: null })),
+        // Create new cluster if no match found or in full mode
+        if (!targetClusterId) {
+          const cluster = await tx.cluster.create({
+            data: {
+              flowId: flow.id,
+              label: c.label?.slice(0, 180) || "Untitled",
+              summary: c.pain?.slice(0, 2000) ?? null,
+              tags: c.tags ?? [],
+              severityScore: c.scores?.severity ?? null,
+              frequencyScore: c.scores?.frequency ?? null,
+              spendIntentScore: c.scores?.spendIntent ?? null,
+              recencyScore: c.scores?.recency ?? null,
+              totalScore: c.scores?.total ?? null,
+            },
+          });
+          targetClusterId = cluster.id;
+          
+          const solution = c.solution || "";
+          const workaround = c.workaround || null;
+          await tx.idea.create({
+            data: {
+              clusterId: cluster.id,
+              pain: c.pain || cluster.label,
+              workaround,
+              solution: solution || "TBD",
+              confidence: c.scores?.total ?? null,
+            },
           });
         }
 
-        const solution = c.solution || "";
-        const workaround = c.workaround || null;
-        await tx.idea.create({
-          data: {
-            clusterId: cluster.id,
-            pain: c.pain || cluster.label,
-            workaround,
-            solution: solution || "TBD",
-            confidence: c.scores?.total ?? null,
-          },
-        });
-        newClusters.push(cluster.id);
+        // Add members (source items) to the target cluster
+        // We need to avoid duplicate members if refining
+        if (c.quotes?.length) {
+          for (const q of c.quotes.slice(0, 20)) {
+            // Check if member already exists (only relevant for refine mode)
+            if (mode === "refine") {
+              const exists = await tx.clusterMember.findFirst({
+                where: {
+                  clusterId: targetClusterId,
+                  sourceItemId: q.sourceId
+                }
+              });
+              if (exists) continue;
+            }
+            
+            await tx.clusterMember.create({
+              data: { 
+                clusterId: targetClusterId, 
+                sourceItemId: q.sourceId, 
+                similarity: null 
+              }
+            });
+          }
+        }
+        
+        newClusters.push(targetClusterId);
       }
 
       return newClusters;
@@ -357,5 +429,3 @@ export async function POST(_: NextRequest, context: { params: Promise<{ id: stri
     );
   }
 }
-
-

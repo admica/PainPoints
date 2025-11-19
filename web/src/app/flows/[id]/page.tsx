@@ -7,6 +7,9 @@ import { RunAnalysisButton } from "@/components/RunAnalysisButton";
 import { AnalysisStatusCard, type AnalysisStatusSnapshot } from "@/components/AnalysisStatusCard";
 import { RedditIngestionProgressCard, type IngestionStatusSnapshot } from "@/components/RedditIngestionProgressCard";
 import { AudioLink } from "@/components/AudioLink";
+import { DeleteClusterButton } from "@/components/DeleteClusterButton";
+import { EditClusterButton } from "@/components/EditClusterButton";
+import { RemoveClusterMemberButton } from "@/components/RemoveClusterMemberButton";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -134,11 +137,20 @@ export default async function FlowPage({ params }: Params) {
           ) : (
             <div className="space-y-4">
               {flow.clusters.map((c) => (
-                <div key={c.id} className="rounded-md border p-4 transition-colors hover:border-cyan-500" style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-color)' }}>
+                <div key={c.id} className="rounded-md border p-4 transition-colors hover:border-cyan-500 relative group" style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-color)' }}>
+                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                    <EditClusterButton 
+                      flowId={flow.id} 
+                      clusterId={c.id} 
+                      initialLabel={c.label} 
+                      initialSummary={c.summary} 
+                    />
+                    <DeleteClusterButton flowId={flow.id} clusterId={c.id} />
+                  </div>
                   <div className="mb-1 text-sm" style={{ color: 'var(--text-muted)' }}>
                     Score: <span className="font-semibold" style={{ color: 'var(--neon-green)' }}>{c.totalScore ?? "—"}</span>
                   </div>
-                  <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--neon-cyan)' }}>{c.label}</h3>
+                  <h3 className="text-lg font-semibold mb-2 mr-12" style={{ color: 'var(--neon-cyan)' }}>{c.label}</h3>
                   {c.summary ? <p className="mb-3" style={{ color: 'var(--text-primary)' }}>{c.summary}</p> : null}
                   {c.idea ? (
                     <div className="mt-2 rounded-md p-3 text-sm border" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
@@ -158,7 +170,12 @@ export default async function FlowPage({ params }: Params) {
                           const item = member.sourceItem;
                           if (!item) return null;
                           return (
-                            <div key={member.id} className="rounded border p-2 text-xs" style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-color)' }}>
+                            <div key={member.id} className="rounded border p-2 text-xs relative group/item pr-8" style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-color)' }}>
+                              <RemoveClusterMemberButton 
+                                flowId={flow.id} 
+                                clusterId={c.id} 
+                                memberId={member.id} 
+                              />
                               {item.title && (
                                 <div className="font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
                                   {item.title}
@@ -206,7 +223,3 @@ export default async function FlowPage({ params }: Params) {
     </div>
   );
 }
-
- 
-
-
