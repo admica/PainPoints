@@ -16,6 +16,8 @@ Pain Points Analyzer is a flow-based research tool that ingests Reddit conversat
 
 ## Setup
 
+Linux only. Works great with AMD and Nvidia GPUs.
+
 ```bash
 git clone https://github.com/admica/PainPoints.git ~/
 cd PainPoints
